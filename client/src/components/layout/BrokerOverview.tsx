@@ -4,24 +4,29 @@ import {Button} from "@/components/ui/button.tsx";
 import {CheckCircle, Mail, MessageSquare, Phone} from "lucide-react";
 import {Toggle} from "@/components/ui/toggle.tsx";
 
+import {useBrokerInfo} from "@/hooks/useBrokerInfo.ts";
+import { useOnboardingWorkflow } from "@/hooks/useOnboardingWorkflow";
+
 const BrokerOverview: React.FC = () => {
     const [assistantEnabled, setAssistantEnabled] = useState(false);
+    const { data: broker, isLoading: brokerLoading, isError: brokerError } = useBrokerInfo("1");
+    const { data: workflow, isLoading: workflowLoading, isError: workflowError } = useOnboardingWorkflow();
 
-    const broker = {
-        name: "Robert Turner",
-        deals: 16,
-        approvalRate: "75%",
-        pending: 7660,
-        workflow: [
-            "Register Broker",
-            "Verify Identity",
-            "Submit Documents",
-            "Training Completed",
-            "Initial Deals Approved",
-            "Ongoing Monitoring",
-            "Final Approval",
-        ],
-    };
+    if (brokerLoading || workflowLoading) {
+        return (
+            <Card className="rounded-2xl shadow-md p-6 flex items-center justify-center">
+                <p className="text-gray-500">Loading broker overview...</p>
+            </Card>
+        );
+    }
+
+    if (brokerError || workflowError || !broker || !workflow) {
+        return (
+            <Card className="rounded-2xl shadow-md p-6">
+                <p className="text-red-500">Failed to load broker information</p>
+            </Card>
+        );
+    }
 
     return (
         <Card className="rounded-2xl shadow-md p-6">
@@ -38,7 +43,7 @@ const BrokerOverview: React.FC = () => {
                             <p className="text-sm text-gray-500">Deals</p>
                         </div>
                         <div>
-                            <p className="text-xl font-bold">{broker.approvalRate}</p>
+                            <p className="text-xl font-bold">{broker.approval_rate}</p>
                             <p className="text-sm text-gray-500">Approval Rate</p>
                         </div>
                         <div>
@@ -65,7 +70,7 @@ const BrokerOverview: React.FC = () => {
             <Card className="border border-black p-5 rounded-lg">
                     <h1 className="font-semibold mb-2">Onboarding Workflow</h1>
                     <ol className="space-y-2">
-                        {broker.workflow.map((step, idx) => (
+                        {workflow.steps.map((step, idx) => (
                             <li key={idx} className="flex items-center gap-2">
                                 <CheckCircle
                                     className={`w-5 h-5 ${
@@ -87,7 +92,6 @@ const BrokerOverview: React.FC = () => {
                         onPressedChange={(state) => setAssistantEnabled(state)}
                     />
             </Card>
-
         </Card>
     );
 };

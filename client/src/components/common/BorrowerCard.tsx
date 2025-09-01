@@ -18,7 +18,7 @@ const BorrowerCard: React.FC<BorrowerCardProps> = ({ borrower, onClick }) => {
                 {/* Left side: name + loan type stacked */}
                 <div>
                     <p className="font-medium">{borrower.name}</p>
-                    <p className="text-sm text-gray-500">{borrower.loanType}</p>
+                    <p className="text-sm text-gray-500">{borrower.loan_type}</p>
                 </div>
 
                 {/* Right side: amount */}

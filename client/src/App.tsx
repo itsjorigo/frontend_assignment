@@ -4,20 +4,29 @@ import BorrowerPipeline from "@/components/layout/BorrowerPipeline.tsx";
 import { AppProvider } from "./context/AppContext";
 import BorrowerDetail from "@/components/layout/BorrowerDetail.tsx";
 import BrokerOverview from "@/components/layout/BrokerOverview.tsx";
-// import { AppProvider } from "./context/AppContext";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { Toaster } from "sonner";
+
 
 export default function App() {
-    return (
-        <AppProvider>
-            <div className="min-h-screen bg-gray-50">
-                <Header/>
+    const queryClient = new QueryClient();
 
-                <main className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
-                    <BorrowerPipeline/>
-                    <BorrowerDetail />
-                    <BrokerOverview />
-                </main>
-            </div>
-        </AppProvider>
+    return (
+        <QueryClientProvider client={queryClient}>
+                <AppProvider>
+                    <Toaster />
+                    <div className="min-h-screen bg-gray-50">
+                        <Header/>
+
+                        <main className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
+                            <BorrowerPipeline/>
+                            <BorrowerDetail />
+                            <BrokerOverview />
+                        </main>
+                    </div>
+                </AppProvider>
+            <ReactQueryDevtools initialIsOpen={false} />
+        </QueryClientProvider>
     );
 }

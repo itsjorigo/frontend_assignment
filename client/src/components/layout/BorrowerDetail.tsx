@@ -3,49 +3,38 @@ import {useAppContext} from "@/context/AppContext.tsx";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {AlertTriangle} from "lucide-react";
 import {Accordion, AccordionContent, AccordionItem, AccordionTrigger} from "@/components/ui/accordion";
-import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
-
-
-// Mock borrower details
-const borrowerData: Record<string, any> = {
-    "1": {
-        id: "1",
-        name: "Alice Johnson",
-        email: "alice@example.com",
-        phone: "555-1234",
-        loanAmount: 250000,
-        status: "In Review",
-        employment: "Software Engineer",
-        existingLoan: "Car Loan - $15,000",
-        creditScore: 710,
-        sourceOfFunds: "Salary Savings",
-        risk: "High Debt-to-Income Ratio",
-    },
-    "2": {
-        id: "2",
-        name: "Bob Smith",
-        email: "bob@example.com",
-        phone: "555-5678",
-        loanAmount: 40000,
-        status: "New",
-        employment: "Teacher",
-        existingLoan: "None",
-        creditScore: 680,
-        sourceOfFunds: "Savings + Part-time work",
-        risk: "Income Inconsistency",
-    },
-};
+import {useBorrowerDetail} from "@/hooks/useBorrowerDetail.ts";
+import AiExplainabilityActions from "@/components/common/AiExplainabilityActions.tsx";
+import EscalateButton from "@/components/common/EscalateButton.tsx";
 
 const BorrowerDetail: React.FC = () => {
     const { activeBorrower } = useAppContext();
-    const borrower = activeBorrower ? borrowerData[activeBorrower] : null;
+    const { data: borrower, isLoading, isError } = useBorrowerDetail(activeBorrower);
 
-    if (!borrower) {
+    if (!activeBorrower) {
         return (
-            <Card className="rounded-2xl shadow-md p-6 flex">
+            <Card className="rounded-2xl shadow-md p-6 flex flex-col">
                 <h1 className="font-semibold">Borrower Details</h1>
-                <p className="font-gray-200">Select a borrower to see details</p>
+                <p className="text-gray-400">Select a borrower to see details</p>
+            </Card>
+        );
+    }
+
+    if (isLoading) {
+        return (
+            <Card className="rounded-2xl shadow-md p-6 flex flex-col items-center justify-center">
+                <h1 className="font-semibold">Borrower Details</h1>
+                <p className="text-gray-500 mt-2">Loading borrower data...</p>
+            </Card>
+        );
+    }
+
+    if (isError || !borrower) {
+        return (
+            <Card className="rounded-2xl shadow-md p-6 flex flex-col">
+                <h1 className="font-semibold">Borrower Details</h1>
+                <p className="text-red-500">Failed to load borrower details</p>
             </Card>
         );
     }
@@ -73,7 +62,7 @@ const BorrowerDetail: React.FC = () => {
                             <tr className="border-b">
                                 <td className="p-2 text-gray-500">Loan Amount</td>
                                 <td className="p-2 font-semibold text-md">
-                                    ${borrower.loanAmount.toLocaleString()}
+                                    ${borrower.loan_amount.toLocaleString()}
                                 </td>
                             </tr>
                             <tr>
@@ -105,15 +94,15 @@ const BorrowerDetail: React.FC = () => {
                         <AccordionItem value="ai-explainability">
                             <AccordionTrigger className="font-semibold">AI Explainability</AccordionTrigger>
                             <AccordionContent className="space-y-2">
-                                <div className="flex items-center text-red-600 gap-2">
-                                    <AlertTriangle className="w-4 h-4"/>
-                                    <span>{borrower.risk}</span>
-                                </div>
-                                <div className="flex flex-col gap-2 mt-3">
-                                    <Button variant="secondary">Request Documents</Button>
-                                    <Button variant="secondary">Send to Valuer</Button>
-                                    <Button variant="default">Approve</Button>
-                                </div>
+                                {borrower.ai_flags.map((flag, idx) => (
+                                    <div key={idx} className="flex items-center text-red-600 gap-2">
+                                        <AlertTriangle className="w-4 h-4" />
+                                        <span>{flag}</span>
+                                    </div>
+                                ))}
+
+                                {/* Action buttons connected to APIs with toast */}
+                                <AiExplainabilityActions borrowerId={borrower.id} />
                             </AccordionContent>
                         </AccordionItem>
                     </Accordion>
@@ -130,15 +119,15 @@ const BorrowerDetail: React.FC = () => {
                             </tr>
                             <tr className="border-b">
                                 <td className="p-2 text-gray-500">Existing Loan</td>
-                                <td className="p-2 font-medium">{borrower.existingLoan}</td>
+                                <td className="p-2 font-medium">${borrower.existing_loan.toLocaleString()}</td>
                             </tr>
                             <tr className="border-b">
                                 <td className="p-2 text-gray-500">Credit Score</td>
-                                <td className="p-2 font-medium">{borrower.creditScore}</td>
+                                <td className="p-2 font-medium">{borrower.credit_score}</td>
                             </tr>
                             <tr>
                                 <td className="p-2 text-gray-500">Source of Funds</td>
-                                <td className="p-2 font-medium">{borrower.sourceOfFunds}</td>
+                                <td className="p-2 font-medium">{borrower.source_of_funds}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -148,13 +137,11 @@ const BorrowerDetail: React.FC = () => {
                 {/* Risk Signal */}
                 <section className="flex flex-col gap-3 bg-red-50 border border-red-200 p-4 rounded-xl">
                     <div className="flex items-center text-red-700">
-                        <AlertTriangle className="w-4 h-4"/>
-                        <span className="ml-2 text-sm">{borrower.risk}</span>
+                        <AlertTriangle className="w-4 h-4" />
+                        <span className="ml-2 text-sm">{borrower.risk_signal}</span>
                     </div>
                     <div>
-                        <Button className="text-sm flex items-center h-8" variant="destructive">
-                            Escalate to Credit Committee
-                        </Button>
+                        <EscalateButton borrowerId={borrower.id} />
                     </div>
                 </section>
             </CardContent>

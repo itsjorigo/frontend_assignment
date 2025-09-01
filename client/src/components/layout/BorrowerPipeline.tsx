@@ -6,23 +6,29 @@ import {useAppContext} from "@/context/AppContext.tsx";
 import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
 import {Label} from "@/components/ui/label";
 import {Card} from "@/components/ui/card.tsx";
-
-// Mock borrowers
-const borrowers = {
-    new: [
-        { id: "1", name: "Alice Johnson", loanType: "Home Loan", amount: 250000, status: "New" },
-        { id: "2", name: "Bob Smith", loanType: "Auto Loan", amount: 40000, status: "New" },
-    ],
-    review: [
-        { id: "3", name: "Charlie Lee", loanType: "Personal Loan", amount: 15000, status: "In Review" },
-    ],
-    approved: [
-        { id: "4", name: "Dana White", loanType: "Business Loan", amount: 120000, status: "Approved" },
-    ],
-};
+import {useBorrowerPipeline} from "@/hooks/useBorrowerPipeline.ts";
 
 const BorrowerPipeline: React.FC = () => {
     const { setActiveBorrower } = useAppContext();
+    const { data, isLoading, isError } = useBorrowerPipeline();
+
+    if (isLoading) {
+        return (
+            <Card className="flex flex-col gap-4 shadow-md p-6">
+                <h1 className="font-semibold">Borrower Pipeline</h1>
+                <p className="text-gray-500">Loading borrowers...</p>
+            </Card>
+        );
+    }
+
+    if (isError || !data) {
+        return (
+            <Card className="flex flex-col gap-4 shadow-md p-6">
+                <h1 className="font-semibold">Borrower Pipeline</h1>
+                <p className="text-red-500">Failed to load borrower pipeline.</p>
+            </Card>
+        );
+    }
 
     return (
 
@@ -39,23 +45,47 @@ const BorrowerPipeline: React.FC = () => {
 
                     {/* New Borrowers */}
                     <TabsContent value="new" className="flex flex-col gap-2">
-                        {borrowers.new.map((b) => (
-                            <BorrowerCard key={b.id} borrower={b} onClick={() => setActiveBorrower(b.id)}/>
-                        ))}
+                        {(data?.new ?? []).length > 0 ? (
+                            data.new.map((b) => (
+                                <BorrowerCard
+                                    key={b.id}
+                                    borrower={b}
+                                    onClick={() => setActiveBorrower(b.id)}
+                                />
+                            ))
+                        ) : (
+                            <p className="text-gray-400 text-sm">No new borrowers</p>
+                        )}
                     </TabsContent>
 
                     {/* In Review */}
-                    <TabsContent value="review" className="flex flex-col gap-2">
-                        {borrowers.review.map((b) => (
-                            <BorrowerCard key={b.id} borrower={b} onClick={() => setActiveBorrower(b.id)}/>
-                        ))}
+                    <TabsContent value="in_review" className="flex flex-col gap-2">
+                        {(data?.in_review ?? []).length > 0 ? (
+                            data.in_review.map((b) => (
+                                <BorrowerCard
+                                    key={b.id}
+                                    borrower={b}
+                                    onClick={() => setActiveBorrower(b.id)}
+                                />
+                            ))
+                        ) : (
+                            <p className="text-gray-400 text-sm">No borrowers in review</p>
+                        )}
                     </TabsContent>
 
                     {/* Approved */}
                     <TabsContent value="approved" className="flex flex-col gap-2">
-                        {borrowers.approved.map((b) => (
-                            <BorrowerCard key={b.id} borrower={b} onClick={() => setActiveBorrower(b.id)}/>
-                        ))}
+                        {(data?.approved ?? []).length > 0 ? (
+                            data.approved.map((b) => (
+                                <BorrowerCard
+                                    key={b.id}
+                                    borrower={b}
+                                    onClick={() => setActiveBorrower(b.id)}
+                                />
+                            ))
+                        ) : (
+                            <p className="text-gray-400 text-sm">No approved borrowers</p>
+                        )}
                     </TabsContent>
                 </Tabs>
 

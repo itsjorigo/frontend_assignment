@@ -1,7 +1,7 @@
 export type Borrower = {
     id: string;
     name: string;
-    loanType: string;
+    loan_type: string;
     amount: number;
     status: string;
 };
